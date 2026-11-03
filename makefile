@@ -1,12 +1,4 @@
 #========================
-# CONFIGURATION
-#========================
-
-DATE := 2026-11-03
-
-
-
-#========================
 # MAKE OPTIONS
 #========================
 
@@ -31,6 +23,7 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 # MISC
 #========================
 
+# absolute path to makefile directory
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 PROJECT_DIR  := $(notdir $(MAKEFILE_DIR))
@@ -41,34 +34,52 @@ PROJECT_DIR  := $(notdir $(MAKEFILE_DIR))
 # TARGETS
 #========================
 
+# status directory ----
+
 STATUS := .status
 
 $(STATUS):
 	@mkdir -p $(STATUS)
 
+# date ----
+
+DATE := $(shell cat $(STATUS)/date 2>/dev/null || date +'%Y-%m-%d')
+
+$(STATUS)/date: | $(STATUS)
+	@echo "Pinning '$(DATE)' as project date..."
+	@date +'%Y-%m-%d' > "$@"
+	@touch $@
+	@echo "Success!"
+
+# Rproj ----
+
 RPROJ_FILE	:= $(wildcard *.Rproj)
 
 $(STATUS)/Rproj: $(RPROJ_FILE) | $(STATUS)
-	@echo "Updating project name in $(RPROJ_FILE)..."
+	@echo "Updating project name to '$(PROJECT_DIR)' in $(RPROJ_FILE)..."
 	@perl -pi -e 's/^(ProjectName:\s*).*/$${1}$(PROJECT_DIR)/' "$(RPROJ_FILE)"
 	@touch $@
 	@echo "Success!"
 
-$(STATUS)/setup:	$(STATUS)/Rproj \
-					$(STATUS)/Rlang \
+# singularity ----
+
+$(STATUS)/singularity:
+	@echo "Detecting 'singularity'..."
+	@command -v singularity >/dev/null 2>&1 || { \
+		echo "Required command 'singularity' not found."; \
+	    echo "Please install it to continue.";
+	    exit 1; \
+	}
+	@touch $@
+	@echo "Success!"
+
+# setup ----
+
+$(STATUS)/setup:	$(STATUS)/date \
+					$(STATUS)/Rproj \
 					$(STATUS)/singularity \
 					| $(STATUS)
 	@touch $@
-
-$(STATUS)/Rlang: | $(STATUS)
-	@echo "Installing R..."
-	@touch $@
-	@echo "Success!"
-
-$(STATUS)/singularity: | $(STATUS)
-	@echo "Installing singularity..."
-	@touch $@
-	@echo "Success!"
 
 
 
@@ -84,10 +95,10 @@ help:
 
 .PHONY: setup
 setup: $(STATUS)/setup
+	@echo "Setup complete!"
 
 .PHONY: clean
 clean:
 	@echo "Removing $(STATUS)/..."
 	@rm -rf $(STATUS)
 	@echo "Success!"
-
