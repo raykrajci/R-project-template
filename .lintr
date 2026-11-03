@@ -1,0 +1,13 @@
+encoding: "UTF-8"
+linters: linters_with_defaults(
+    # ... select linters ...
+        defaults = linters_with_tags(c( "default",
+                                        "best_practices",
+                                        "common_mistakes",
+                                        "readibility",
+                                        "style"
+                                       )),
+    # ... override defaults ...
+        indentation_linter = indentation_linter(indent = 4L)
+    )
+
