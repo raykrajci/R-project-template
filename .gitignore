@@ -1,4 +1,5 @@
 *.sif
+.status/
 
 # History files
 .Rhistory
