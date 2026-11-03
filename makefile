@@ -43,7 +43,7 @@ $(STATUS):
 
 # date ----
 
-DATE := $(shell cat $(STATUS)/date 2>/dev/null || date +'%Y-%m-%d')
+DATE = $(shell cat $(STATUS)/date 2>/dev/null || date +'%Y-%m-%d')
 
 $(STATUS)/date: | $(STATUS)
 	@echo "Pinning '$(DATE)' as project date..."
@@ -63,6 +63,10 @@ $(STATUS)/Rproj: $(RPROJ_FILE) | $(STATUS)
 
 # singularity ----
 
+DEF_FILE := singularity/container.def
+SIF_FILE := singularity/container.sif
+PKG_FILE := R/packages.R
+
 $(STATUS)/singularity:
 	@echo "Detecting 'singularity'..."
 	@command -v singularity >/dev/null 2>&1 || { \
@@ -73,11 +77,20 @@ $(STATUS)/singularity:
 	@touch $@
 	@echo "Success!"
 
+$(SIF_FILE): $(DEF_FILE) $(PKG_FILE) $(STATUS)/date
+	@echo "Building $@..."
+	@sudo -E \
+		singularity build \
+		--build-arg PPM_DATE=$(DATE) \
+		$(SIF_FILE) $(DEF_FILE)
+	@echo "Success!"
+
 # setup ----
 
 $(STATUS)/setup:	$(STATUS)/date \
 					$(STATUS)/Rproj \
 					$(STATUS)/singularity \
+					$(SIF_FILE) \
 					| $(STATUS)
 	@touch $@
 

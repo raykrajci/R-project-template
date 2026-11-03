@@ -1,0 +1,67 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+%arguments
+    PPM_DATE=2026-11-03
+    R_VERSION=4.6.1
+
+%environment
+    export PATH="/opt/R/{{ R_VERSION }}/bin:$PATH"
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+
+%files
+    R/packages.R /opt/packages.R
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+
+    # install core utilities
+    apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        ca-certificates \
+        gfortran \
+        libatlas-base-dev \
+        libreadline-dev \
+        tzdata \
+        && rm -rf /var/lib/apt/lists/*
+
+    # install R
+    curl -O https://cdn.posit.co/r/ubuntu-2404/pkgs/r-{{ R_VERSION }}_1_amd64.deb
+    apt-get update && apt-get install -y ./r-{{ R_VERSION }}_1_amd64.deb
+    rm r-{{ R_VERSION }}_1_amd64.deb
+
+    # add to path
+    ln -s /opt/R/{{ R_VERSION }}/bin/R /usr/local/bin/R
+    ln -s /opt/R/{{ R_VERSION }}/bin/Rscript /usr/local/bin/Rscript
+
+    # install R dependencies
+    apt-get install -y --no-install-recommends \
+        make \
+        gcc \
+        g++ \
+        libcurl4-openssl-dev \
+        libssl-dev \
+        libxml2-dev \
+        libfontconfig1-dev \
+        libharfbuzz-dev \
+        libfribidi-dev \
+        libpng-dev \
+        libtiff-dev \
+        libjpeg-dev \
+        && rm -rf /var/lib/apt/lists/*
+
+    # configure posit package manager snapshot
+    R_PROFILE_PATH="/opt/R/{{ R_VERSION }}/lib/R/etc/Rprofile.site"
+    echo "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/{{ PPM_DATE }}'))" >> "$R_PROFILE_PATH"
+    echo "options(HTTPUserAgent = sprintf('R/%s R (%s)', getRversion(), paste(getRversion(), R.version[['platform']], R.version[['arch']], R.version[['os']]))" >> "$R_PROFILE_PATH"
+
+    # install packages
+    Rscript /opt/packages.R
+
+%runscript
+    exec Rscript "$@"
+
+%labels
+    R_VERSION {{ R_VERSION }}
+    PPM_DATE {{ PPM_DATE }}
