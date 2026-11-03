@@ -87,15 +87,23 @@ $(STATUS)/setup:	$(STATUS)/date \
 # PHONY TARGETS
 #========================
 
+ARG := \t\e[1m
+DSC := \e[0m\t
+END :=\e[0m
+
 .PHONY: help
 help:
 	@echo "help"
-	@echo "\tsetup\t-"
-	@echo "\tclean\t-"
+	@echo -e "$(ARG)setup$(DSC)Prepares the project template for use.$(END)"
+	@echo -e "$(ARG)clean$(DSC)Resets project template status.$(END)"
+	@echo -e "$(ARG)reset$(DSC)Runs 'clean' then 'setup'.$(END)"
 
 .PHONY: setup
 setup: $(STATUS)/setup
 	@echo "Setup complete!"
+
+.PHONY: reset
+reset: clean setup
 
 .PHONY: clean
 clean:
