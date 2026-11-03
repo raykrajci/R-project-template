@@ -1,10 +1,17 @@
+#========================
+# CONFIGURATION
+#========================
+
+DATE := 2026-11-03
+
+
+
+#========================
+# MAKE OPTIONS
+#========================
+
+# set default target
 .DEFAULT_GOAL := help
-
-
-#========================
-# MAKE CONFIG
-#========================
-
 # use bash
 SHELL := /bin/bash
 # use single shell per target
@@ -18,15 +25,17 @@ SHELL := /bin/bash
 # make fails fast
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
+
+
 #========================
 # MISC
 #========================
 
-DATE := 2026-11-03
-
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 PROJECT_DIR  := $(notdir $(MAKEFILE_DIR))
+
+
 
 #========================
 # TARGETS
@@ -60,6 +69,8 @@ $(STATUS)/singularity: | $(STATUS)
 	@echo "Installing singularity..."
 	@touch $@
 	@echo "Success!"
+
+
 
 #========================
 # PHONY TARGETS
