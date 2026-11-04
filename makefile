@@ -2,31 +2,35 @@
 # MAKE OPTIONS
 #========================
 
-# set default target
 .DEFAULT_GOAL := help
-# use bash
 SHELL := /bin/bash
-# use single shell per target
 .ONESHELL:
-# commands fail fast
 .SHELLFLAGS := -eu -o pipefail -c
-# delete target on failure
 .DELETE_ON_ERROR:
-# disable implicit c rules
 .SUFFIXES:
-# make fails fast
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
 
 
 #========================
-# MISC
+# MAKE VARIABLES
 #========================
+
+# misc
+DATE = $(shell cat $(STATUS_DIR)/date 2>/dev/null || date +'%Y-%m-%d')
 
 # absolute path to makefile directory
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+DIR_NAME  := $(notdir $(MAKEFILE_DIR))
 
-PROJECT_DIR  := $(notdir $(MAKEFILE_DIR))
+# directories
+STATUS_DIR := $(MAKEFILE_DIR)/.status
+
+# files
+RPROJ_FILE	:= $(wildcard $(MAKEFILE_DIR)/*.Rproj)
+DEF_FILE	:= $(MAKEFILE_DIR)/singularity/container.def
+SIF_FILE	:= $(MAKEFILE_DIR)/singularity/container.sif
+PKG_FILE	:= $(MAKEFILE_DIR)/R/packages.R
 
 
 
@@ -34,40 +38,22 @@ PROJECT_DIR  := $(notdir $(MAKEFILE_DIR))
 # TARGETS
 #========================
 
-# status directory ----
+$(STATUS_DIR):
+	@mkdir -p $(STATUS_DIR)
 
-STATUS := .status
-
-$(STATUS):
-	@mkdir -p $(STATUS)
-
-# date ----
-
-DATE = $(shell cat $(STATUS)/date 2>/dev/null || date +'%Y-%m-%d')
-
-$(STATUS)/date: | $(STATUS)
+$(STATUS_DIR)/date: | $(STATUS_DIR)
 	@echo "Pinning '$(DATE)' as project date..."
 	@date +'%Y-%m-%d' > "$@"
 	@touch $@
 	@echo "Success!"
 
-# Rproj ----
-
-RPROJ_FILE	:= $(wildcard *.Rproj)
-
-$(STATUS)/Rproj: $(RPROJ_FILE) | $(STATUS)
-	@echo "Updating project name to '$(PROJECT_DIR)' in $(RPROJ_FILE)..."
-	@perl -pi -e 's/^(ProjectName:\s*).*/$${1}$(PROJECT_DIR)/' "$(RPROJ_FILE)"
+$(STATUS_DIR)/Rproj: $(RPROJ_FILE) | $(STATUS_DIR)
+	@echo "Updating project name to '$(DIR_NAME)' in $(RPROJ_FILE)..."
+	@perl -pi -e 's/^(ProjectName:\s*).*/$${1}$(DIR_NAME)/' "$(RPROJ_FILE)"
 	@touch $@
 	@echo "Success!"
 
-# singularity ----
-
-DEF_FILE := singularity/container.def
-SIF_FILE := singularity/container.sif
-PKG_FILE := R/packages.R
-
-$(STATUS)/singularity:
+$(STATUS_DIR)/singularity:
 	@echo "Detecting 'singularity'..."
 	@command -v singularity >/dev/null 2>&1 || { \
 		echo "Required command 'singularity' not found."; \
@@ -77,21 +63,20 @@ $(STATUS)/singularity:
 	@touch $@
 	@echo "Success!"
 
-$(SIF_FILE): $(DEF_FILE) $(PKG_FILE) $(STATUS)/date
+$(SIF_FILE): $(DEF_FILE) $(PKG_FILE) $(STATUS_DIR)/date
 	@echo "Building $@..."
 	@sudo -E \
 		singularity build \
+		--force \
 		--build-arg PPM_DATE=$(DATE) \
 		$(SIF_FILE) $(DEF_FILE)
 	@echo "Success!"
 
-# setup ----
-
-$(STATUS)/setup:	$(STATUS)/date \
-					$(STATUS)/Rproj \
-					$(STATUS)/singularity \
+$(STATUS_DIR)/setup:	$(STATUS_DIR)/date \
+					$(STATUS_DIR)/Rproj \
+					$(STATUS_DIR)/singularity \
 					$(SIF_FILE) \
-					| $(STATUS)
+					| $(STATUS_DIR)
 	@touch $@
 
 
@@ -108,11 +93,11 @@ END :=\e[0m
 help:
 	@echo "help"
 	@echo -e "$(ARG)setup$(DSC)Prepares the project template for use.$(END)"
-	@echo -e "$(ARG)clean$(DSC)Resets project template status.$(END)"
+	@echo -e "$(ARG)clean$(DSC)Resets project template STATUS_DIR.$(END)"
 	@echo -e "$(ARG)reset$(DSC)Runs 'clean' then 'setup'.$(END)"
 
 .PHONY: setup
-setup: $(STATUS)/setup
+setup: $(STATUS_DIR)/setup
 	@echo "Setup complete!"
 
 .PHONY: reset
@@ -120,6 +105,6 @@ reset: clean setup
 
 .PHONY: clean
 clean:
-	@echo "Removing $(STATUS)/..."
-	@rm -rf $(STATUS)
+	@echo "Removing $(STATUS_DIR)/..."
+	@rm -rf $(STATUS_DIR)
 	@echo "Success!"

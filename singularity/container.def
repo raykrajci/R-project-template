@@ -16,7 +16,7 @@ From: ubuntu:24.04
 %post
     export DEBIAN_FRONTEND=noninteractive
 
-    # install core utilities
+    # install essentials and dependencies
     apt-get update && apt-get install -y --no-install-recommends \
         curl \
         ca-certificates \
@@ -24,19 +24,6 @@ From: ubuntu:24.04
         libatlas-base-dev \
         libreadline-dev \
         tzdata \
-        && rm -rf /var/lib/apt/lists/*
-
-    # install R
-    curl -O https://cdn.posit.co/r/ubuntu-2404/pkgs/r-{{ R_VERSION }}_1_amd64.deb
-    apt-get update && apt-get install -y ./r-{{ R_VERSION }}_1_amd64.deb
-    rm r-{{ R_VERSION }}_1_amd64.deb
-
-    # add to path
-    ln -s /opt/R/{{ R_VERSION }}/bin/R /usr/local/bin/R
-    ln -s /opt/R/{{ R_VERSION }}/bin/Rscript /usr/local/bin/Rscript
-
-    # install R dependencies
-    apt-get install -y --no-install-recommends \
         make \
         gcc \
         g++ \
@@ -50,6 +37,15 @@ From: ubuntu:24.04
         libtiff-dev \
         libjpeg-dev \
         && rm -rf /var/lib/apt/lists/*
+
+    # install R
+    curl -O https://cdn.posit.co/r/ubuntu-2404/pkgs/r-{{ R_VERSION }}_1_amd64.deb
+    apt-get update && apt-get install -y ./r-{{ R_VERSION }}_1_amd64.deb
+    rm r-{{ R_VERSION }}_1_amd64.deb
+
+    # add to path
+    ln -s /opt/R/{{ R_VERSION }}/bin/R /usr/local/bin/R
+    ln -s /opt/R/{{ R_VERSION }}/bin/Rscript /usr/local/bin/Rscript
 
     # configure posit package manager snapshot
     R_PROFILE_PATH="/opt/R/{{ R_VERSION }}/lib/R/etc/Rprofile.site"
