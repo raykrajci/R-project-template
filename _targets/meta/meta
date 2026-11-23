@@ -1,0 +1,4 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+.iterate|function|1c422c6ac52c0b21
+.errors|function|90b23bb88f8d8111
+renv_lock|stem||ee484e1f2d478114|2c530c1562a7fbd1|-2034621282|C:/Users/Ray/Documents/GitHub/R-project-template/renv.lock|t20770.9424903922s||0|file|local|vector|||||Error resolving output location: missing files: C:/Users/Ray/Documents/GitHub/R-project-template/renv.lock

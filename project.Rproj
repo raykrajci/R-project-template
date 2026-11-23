@@ -17,6 +17,8 @@ StripTrailingWhitespace: Yes
 
 BuildType: Makefile
 
+UseNativePipeOperator: No
+
 QuitChildProcessesOnExit: Yes
 DisableExecuteRprofile: Yes
 

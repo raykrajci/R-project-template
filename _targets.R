@@ -12,5 +12,4 @@ tar_option_set(
 tar_source(here("R"))
 
 tar_plan(
-    # ...
 )
